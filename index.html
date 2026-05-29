@@ -605,6 +605,97 @@
       color: var(--blue);
     }
 
+    /* ─── PROGRESS BAR ────────────────────────── */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--surface3);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    #progressBar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--purple), var(--green));
+      border-radius: 999px;
+      transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+      position: relative;
+    }
+
+    #progressBar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ─── MOTIVATIONAL ANIMAL ────────────────── */
+    .motivational-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1));
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: var(--r);
+      margin: 16px 0;
+      animation: slideInUp 0.5s ease-out;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .motivational-animal {
+      font-size: 3rem;
+      animation: bounce 1s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .motivational-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .motivational-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--purple);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .motivational-message {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
     .quiz-card-modern {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -713,6 +804,13 @@
     .quiz-feedback.correct { background: var(--green-dim); color: var(--green); }
     .quiz-feedback.wrong { background: var(--red-dim); color: var(--red); }
 
+    .quiz-action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
     .quiz-finished-card {
       text-align: center;
       padding: 40px 20px;
@@ -721,6 +819,18 @@
     .quiz-result-icon { font-size: 4rem; margin-bottom: 16px; }
     .quiz-result-score { font-size: 2.5rem; font-weight: 900; margin-bottom: 8px; }
     .quiz-result-msg { color: var(--text2); font-size: 1.1rem; margin-bottom: 24px; }
+
+    .quiz-retake-buttons {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+      margin-bottom: 24px;
+    }
+
+    .quiz-retake-buttons .btn {
+      width: 100%;
+      justify-content: center;
+    }
 
     .review-section {
       margin-top: 32px;
@@ -854,6 +964,65 @@
       font-weight: 700;
       color: var(--green);
       flex-shrink: 0;
+    }
+
+    /* ─── CUSTOM QUESTION SELECTOR ────────────── */
+    .question-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .question-selector-card {
+      background: var(--surface3);
+      border: 2px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .question-selector-card:hover {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+    }
+
+    .question-selector-card.selected {
+      border-color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .question-selector-card input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .question-selector-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .question-selector-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .selector-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
 
     /* ─── LEADERBOARD ─────────────────────────── */
@@ -1133,6 +1302,7 @@
       .stat-num { font-size: 1.3rem; }
       .browse-controls { flex-direction: column; }
       .browse-controls .field { width: 100%; }
+      .question-selector-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1317,6 +1487,7 @@
           <h2>Quiz mode</h2>
           <div class="toolbar-group">
             <button class="btn btn-green btn-sm" id="startQuizBtn">▶ Start Quiz</button>
+            <button class="btn btn-ghost btn-sm" id="selectQuestionsBtn">🎯 Select Questions</button>
             <button class="btn btn-ghost btn-sm" id="restartQuizBtn">↺ Reset</button>
           </div>
         </div>
@@ -1343,6 +1514,22 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- QUESTION SELECTOR VIEW -->
+      <div class="panel hidden" id="selectorViewPanel">
+        <div class="panel-head">
+          <h2>Select Questions to Quiz On</h2>
+          <button class="btn btn-ghost btn-sm" id="backFromSelectorBtn">← Back</button>
+        </div>
+        <div class="panel-body">
+          <div class="selector-controls">
+            <button class="btn btn-secondary btn-sm" id="selectAllBtn">Select All</button>
+            <button class="btn btn-secondary btn-sm" id="deselectAllBtn">Deselect All</button>
+            <button class="btn btn-primary btn-sm" id="startSelectedQuizBtn">Start Quiz with Selected</button>
+          </div>
+          <div id="questionSelectorList" class="question-selector-grid"></div>
         </div>
       </div>
 
@@ -1455,6 +1642,7 @@
     addViewPanel: document.getElementById('addViewPanel'),
     browseViewPanel: document.getElementById('browseViewPanel'),
     quizViewPanel: document.getElementById('quizViewPanel'),
+    selectorViewPanel: document.getElementById('selectorViewPanel'),
     addView: document.getElementById('addView'),
     browseView: document.getElementById('browseView'),
     quizView: document.getElementById('quizView'),
@@ -1472,6 +1660,7 @@
     sortOldestBtn: document.getElementById('sortOldestBtn'),
     clearAllBtn: document.getElementById('clearAllBtn'),
     startQuizBtn: document.getElementById('startQuizBtn'),
+    selectQuestionsBtn: document.getElementById('selectQuestionsBtn'),
     restartQuizBtn: document.getElementById('restartQuizBtn'),
     quizArea: document.getElementById('quizArea'),
     quizCorrect: document.getElementById('quizCorrect'),
@@ -1490,7 +1679,12 @@
     ocrStatus: document.getElementById('ocrStatus'),
     ocrDropZone: document.getElementById('ocrDropZone'),
     leaderboardPodium: document.getElementById('leaderboardPodium'),
-    leaderboardList: document.getElementById('leaderboardList')
+    leaderboardList: document.getElementById('leaderboardList'),
+    questionSelectorList: document.getElementById('questionSelectorList'),
+    selectAllBtn: document.getElementById('selectAllBtn'),
+    deselectAllBtn: document.getElementById('deselectAllBtn'),
+    startSelectedQuizBtn: document.getElementById('startSelectedQuizBtn'),
+    backFromSelectorBtn: document.getElementById('backFromSelectorBtn')
   };
 
   const state = {
@@ -1499,10 +1693,25 @@
     activeTab: 'add',
     sortMode: 'newest',
     search: '',
-    quiz: { questions: [], index: 0, score: 0, answered: false, attempts: 0, results: [] },
+    quiz: { questions: [], index: 0, score: 0, answered: false, attempts: 0, results: [], allQuestions: [], wrongAnswers: [] },
+    selectedQuestions: new Set(),
     pendingOCRText: '',
     leaderboard: {}
   };
+
+  // Motivational animals and messages
+  const motivationalMessages = [
+    { animal: '🦋', msg: 'You\'re doing amazing! Keep it up!' },
+    { animal: '🐢', msg: 'Slow and steady wins the race!' },
+    { animal: '🦁', msg: 'You\'re a studying superstar!' },
+    { animal: '🐙', msg: 'Eight arms, one goal: mastery!' },
+    { animal: '🦅', msg: 'Soaring to new heights!' },
+    { animal: '🐬', msg: 'Making waves in your studies!' },
+    { animal: '🦊', msg: 'Clever and determined!' },
+    { animal: '🐝', msg: 'Busy bee working hard!' },
+    { animal: '🦋', msg: 'Transforming knowledge into power!' },
+    { animal: '🌟', msg: 'You\'re shining bright!' }
+  ];
 
   // ── Utilities ──────────────────────────────────────────────
 
@@ -1545,192 +1754,45 @@
     els.answerC.value = '';
     els.answerD.value = '';
     els.correctSelect.value = 'A';
-    state.pendingOCRText = '';
     setOcrStatus('Tip: works best with a clear screenshot of one question at a time.', '');
-    els.questionInput.focus();
   }
 
-  function setOcrStatus(msg, type) {
+  function setOcrStatus(msg, cls) {
     els.ocrStatus.textContent = msg;
-    els.ocrStatus.className = 'ocr-status' + (type ? ' ' + type : '');
+    els.ocrStatus.className = 'ocr-status ' + cls;
   }
 
-  // ── User Management ────────────────────────────────────────
+  function saveLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: state.questions, attempts: state.quiz.attempts }));
+  }
+
+  function loadLocal() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        state.questions = Array.isArray(data.questions) ? data.questions : [];
+        state.quiz.attempts = Number(data.attempts) || 0;
+      } catch (e) { console.error(e); }
+    }
+  }
 
   function saveUserName(name) {
     state.userName = cleanText(name);
     localStorage.setItem(USER_KEY, state.userName);
-    els.userNameDisplay.textContent = state.userName;
+    els.userNameDisplay.textContent = state.userName || 'Guest';
     els.nameModal.classList.remove('show');
+    showToast(`Welcome, ${state.userName}!`);
   }
 
   function loadUserName() {
-    const saved = localStorage.getItem(USER_KEY);
-    if (saved) {
-      state.userName = saved;
+    const stored = localStorage.getItem(USER_KEY);
+    if (stored) {
+      state.userName = stored;
       els.userNameDisplay.textContent = state.userName;
       els.nameModal.classList.remove('show');
     }
   }
-
-  // ── Leaderboard ────────────────────────────────────────────
-
-  function loadLeaderboard() {
-    try {
-      const raw = localStorage.getItem(LEADERBOARD_KEY);
-      if (raw) state.leaderboard = JSON.parse(raw);
-    } catch(e) { console.warn('loadLeaderboard error', e); }
-  }
-
-  function listenToLeaderboard() {
-    if (!db) { renderLeaderboard(); return; }
-    db.collection('leaderboard').onSnapshot(snapshot => {
-      state.leaderboard = {};
-      snapshot.docs.forEach(doc => {
-        state.leaderboard[doc.id] = doc.data().count || 0;
-      });
-      renderLeaderboard();
-    }, err => {
-      console.warn('Leaderboard sync error:', err);
-    });
-  }
-
-  function incrementUserQuestions() {
-    if (!state.userName) return;
-    if (db) {
-      db.collection('leaderboard').doc(state.userName).set(
-        { count: firebase.firestore.FieldValue.increment(1) },
-        { merge: true }
-      ).catch(err => console.error('Failed to update leaderboard:', err));
-    } else {
-      if (!state.leaderboard[state.userName]) {
-        state.leaderboard[state.userName] = 0;
-      }
-      state.leaderboard[state.userName]++;
-      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(state.leaderboard));
-      renderLeaderboard();
-    }
-  }
-
-  function renderLeaderboard() {
-    const sorted = Object.entries(state.leaderboard)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-
-    if (sorted.length === 0) {
-      els.leaderboardList.innerHTML = '<div class="leaderboard-item" style="color:var(--text3);">No data yet</div>';
-      return;
-    }
-
-    const top3 = sorted.slice(0, 3);
-    const rest = sorted.slice(3, 5);
-
-    // Render podium
-    const podiumHtml = `
-      <div class="podium-slot">
-        <div class="podium-rank second">
-          <div class="podium-medal">🥈</div>
-          <div class="podium-name">${top3[1] ? escapeHtml(top3[1][0]) : '—'}</div>
-          <div class="podium-count">${top3[1] ? top3[1][1] : 0}</div>
-        </div>
-      </div>
-      <div class="podium-slot">
-        <div class="podium-rank first">
-          <div class="podium-medal">🥇</div>
-          <div class="podium-name">${top3[0] ? escapeHtml(top3[0][0]) : '—'}</div>
-          <div class="podium-count">${top3[0] ? top3[0][1] : 0}</div>
-        </div>
-      </div>
-      <div class="podium-slot">
-        <div class="podium-rank third">
-          <div class="podium-medal">🥉</div>
-          <div class="podium-name">${top3[2] ? escapeHtml(top3[2][0]) : '—'}</div>
-          <div class="podium-count">${top3[2] ? top3[2][1] : 0}</div>
-        </div>
-      </div>`;
-    els.leaderboardPodium.innerHTML = podiumHtml;
-
-    // Render list (4-5)
-    const listHtml = rest.map((entry, idx) => `
-      <div class="leaderboard-item">
-        <div class="leaderboard-rank">${idx + 4}</div>
-        <div class="leaderboard-name">${escapeHtml(entry[0])}</div>
-        <div class="leaderboard-count">${entry[1]}</div>
-      </div>`).join('');
-    els.leaderboardList.innerHTML = listHtml || '<div class="leaderboard-item" style="color:var(--text3);">No more entries</div>';
-  }
-
-  // ── Tab routing ────────────────────────────────────────────
-
-  function setTab(tab) {
-    state.activeTab = tab;
-    els.tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-    els.addViewPanel.classList.toggle('hidden', tab !== 'add');
-    els.browseViewPanel.classList.toggle('hidden', tab !== 'browse');
-    els.quizViewPanel.classList.toggle('hidden', tab !== 'quiz');
-    if (tab === 'browse') renderBrowse();
-    if (tab === 'quiz') renderQuiz();
-  }
-
-  // ── Persistence ────────────────────────────────────────────
-
-  function saveLocal() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: state.questions, quizAttempts: state.quiz.attempts }));
-    renderStats();
-  }
-
-  function loadLocal() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const p = JSON.parse(raw);
-      state.questions = Array.isArray(p.questions) ? p.questions : [];
-      state.quiz.attempts = Number(p.quizAttempts || 0);
-    } catch(e) { console.warn('loadLocal error', e); }
-  }
-
-  // ── Firebase ───────────────────────────────────────────────
-
-  function setSyncStatus(status) {
-    const pill = els.syncPill;
-    if (status === 'synced')       { pill.textContent = '● Synced';      pill.className = 'status-dot synced'; }
-    else if (status === 'syncing') { pill.textContent = '◌ Connecting…'; pill.className = 'status-dot local'; }
-    else if (status === 'error')   { pill.textContent = '● Error';        pill.className = 'status-dot'; pill.style.color = 'var(--red)'; }
-    else                           { pill.textContent = '● Local only';   pill.className = 'status-dot local'; }
-  }
-
-  function ensureFirebase() {
-    const cfg = firebaseConfig || {};
-    const ok = Object.values(cfg).every(v => typeof v === 'string' && v && !v.includes('PUT_'));
-    if (!ok) { setSyncStatus('local'); return null; }
-    try {
-      firebase.initializeApp(cfg);
-      setSyncStatus('syncing');
-      return firebase.firestore();
-    } catch(e) {
-      console.warn('Firebase init failed', e);
-      setSyncStatus('error');
-      return null;
-    }
-  }
-
-  const db = ensureFirebase();
-
-  function listenToQuestions() {
-    if (!db) { renderAll(); return; }
-    db.collection('questions').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-      state.questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setSyncStatus('synced');
-      renderAll();
-    }, err => {
-      console.warn(err);
-      setSyncStatus('error');
-      showToast('Firebase sync failed — check your config and Firestore rules.');
-      renderAll();
-    });
-  }
-
-  // ── Render ─────────────────────────────────────────────────
 
   function renderStats() {
     els.statQuestions.textContent = state.questions.length;
@@ -1738,66 +1800,64 @@
     els.bankCountPill.textContent = state.questions.length;
   }
 
-  function getFilteredQuestions() {
-    const search = state.search.toLowerCase();
-    return state.questions.filter(q => {
-      const blob = [q.question, q.answers?.A, q.answers?.B, q.answers?.C, q.answers?.D].filter(Boolean).join(' ').toLowerCase();
-      return !search || blob.includes(search);
-    }).sort((a,b) => state.sortMode === 'newest' ? Number(b.createdAt||0) - Number(a.createdAt||0) : Number(a.createdAt||0) - Number(b.createdAt||0));
-  }
-
-  function formatTime(ts) {
-    return new Date(ts).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  function setTab(tab) {
+    state.activeTab = tab;
+    els.tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    els.addViewPanel.classList.toggle('hidden', tab !== 'add');
+    els.browseViewPanel.classList.toggle('hidden', tab !== 'browse');
+    els.quizViewPanel.classList.toggle('hidden', tab !== 'quiz');
+    els.selectorViewPanel.classList.toggle('hidden', tab !== 'selector');
   }
 
   function renderBrowse() {
-    const data = getFilteredQuestions();
-    if (!data.length) {
-      els.browseList.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No questions match. Try a different search or add some questions first.</p></div>';
-      return;
-    }
-    els.browseList.innerHTML = data.map((q, i) => {
-      const letters = ['A','B','C','D'];
-      const ansHtml = letters.filter(l => q.answers?.[l]).map(l => `
-        <div class="ans-pill ${q.correct === l ? 'correct' : ''}">
-          <span class="ans-letter">${l}</span>
-          <span>${escapeHtml(q.answers[l])}</span>
-        </div>`).join('');
-      return `
-        <div class="q-card">
-          <div class="q-card-top">
-            <div style="flex:1;">
-              <div class="q-num">Q${i+1}</div>
-              <div class="q-text">${escapeHtml(q.question || '')}</div>
+    const filtered = state.questions
+      .filter(q => !state.search || normalizeText(q.question).includes(normalizeText(state.search)))
+      .sort((a, b) => state.sortMode === 'newest' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt);
+
+    els.browseList.innerHTML = filtered.length
+      ? filtered.map((q, i) => {
+        const answerLetters = ['A', 'B', 'C', 'D'].filter(l => q.answers?.[l]);
+        const answerHtml = answerLetters.map(l => `
+          <div class="ans-pill ${q.correct === l ? 'correct' : ''}">
+            <span class="ans-letter">${l}</span>
+            <span>${escapeHtml(q.answers[l])}</span>
+          </div>`).join('');
+        return `
+          <div class="q-card">
+            <div class="q-card-top">
+              <div>
+                <div class="q-num">Q${i + 1}</div>
+                <div class="q-text">${escapeHtml(q.question)}</div>
+              </div>
+              <button class="btn btn-danger btn-xs" onclick="deleteQuestion('${q.id}')">🗑</button>
             </div>
-            <button class="btn btn-ghost btn-xs" data-delete="${q.id}">✕</button>
-          </div>
-          <div class="ans-grid">${ansHtml}</div>
-          <div class="q-footer">
-            <span class="q-meta">Correct: <strong>${q.correct}</strong> — ${escapeHtml(q.answers?.[q.correct] || '')}</span>
-            <span class="q-meta">${formatTime(q.createdAt || Date.now())}</span>
-          </div>
-        </div>`;
-    }).join('');
-    document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteQuestion(btn.dataset.delete)));
+            <div class="ans-grid">${answerHtml}</div>
+            <div class="q-footer">
+              <div class="q-meta">Added ${new Date(q.createdAt).toLocaleDateString()}</div>
+            </div>
+          </div>`;
+      }).join('')
+      : '<div class="empty-state"><div class="empty-icon">📭</div><p>No questions yet. Add one in the Add tab!</p></div>';
   }
 
-  async function deleteQuestion(id) {
+  function deleteQuestion(id) {
     if (!confirm('Delete this question?')) return;
+    state.questions = state.questions.filter(q => q.id !== id);
     if (db) {
-      await db.collection('questions').doc(id).delete();
+      db.collection('questions').doc(id).delete().catch(() => {});
     } else {
-      state.questions = state.questions.filter(q => q.id !== id);
-      saveLocal(); renderAll();
+      saveLocal();
     }
+    renderAll();
     showToast('Question deleted.');
   }
 
-  // ── Quiz ───────────────────────────────────────────────────
-
-  function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  function shuffle(a) {
+    a = [...a];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
     return a;
   }
 
@@ -1806,10 +1866,53 @@
       els.quizArea.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Add some questions first.</p></div>';
       return;
     }
+    state.quiz.allQuestions = state.questions;
     state.quiz.questions = shuffle(state.questions);
-    state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false; state.quiz.results = [];
-    state.quiz.attempts++; saveLocal(); renderQuiz();
+    state.quiz.index = 0;
+    state.quiz.score = 0;
+    state.quiz.answered = false;
+    state.quiz.results = [];
+    state.quiz.wrongAnswers = [];
+    state.quiz.attempts++;
+    saveLocal();
+    renderQuiz();
     showToast('Quiz started — good luck!');
+  }
+
+  function startSelectedQuiz() {
+    if (state.selectedQuestions.size === 0) {
+      showToast('Select at least one question!');
+      return;
+    }
+    const selected = state.questions.filter(q => state.selectedQuestions.has(q.id));
+    state.quiz.allQuestions = selected;
+    state.quiz.questions = shuffle(selected);
+    state.quiz.index = 0;
+    state.quiz.score = 0;
+    state.quiz.answered = false;
+    state.quiz.results = [];
+    state.quiz.wrongAnswers = [];
+    state.quiz.attempts++;
+    saveLocal();
+    setTab('quiz');
+    renderQuiz();
+    showToast('Quiz started with selected questions!');
+  }
+
+  function retakeWrongAnswers() {
+    if (state.quiz.wrongAnswers.length === 0) {
+      showToast('No wrong answers to retake!');
+      return;
+    }
+    state.quiz.questions = shuffle(state.quiz.wrongAnswers);
+    state.quiz.index = 0;
+    state.quiz.score = 0;
+    state.quiz.answered = false;
+    state.quiz.results = [];
+    state.quiz.attempts++;
+    saveLocal();
+    renderQuiz();
+    showToast('Retaking wrong answers!');
   }
 
   function renderQuiz() {
@@ -1850,18 +1953,39 @@
             <div class="review-answers">${answerOptions}</div>
           </div>`;
       }).join('');
+
+      const retakeButtons = `
+        <div class="quiz-retake-buttons">
+          <button class="btn btn-primary" onclick="startQuiz()">🔄 Retake All</button>
+          ${state.quiz.wrongAnswers.length > 0 ? `<button class="btn btn-secondary" onclick="retakeWrongAnswers()">📝 Retake Wrong Answers (${state.quiz.wrongAnswers.length})</button>` : ''}
+        </div>`;
+
       els.quizArea.innerHTML = `
         <div class="quiz-finished-card">
           <div class="quiz-result-icon">${pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📖'}</div>
           <div class="quiz-result-score">${state.quiz.score} / ${total}</div>
           <div class="quiz-result-msg">${pct}% correct — ${pct>=80?'Great work!':pct>=50?'Keep studying!':'Review and try again.'}</div>
-          <button class="btn btn-primary" onclick="startQuiz()" style="margin-bottom:24px;">Try Again</button>
+          ${retakeButtons}
           <div class="review-section">
             <div class="review-title">Review</div>
             <div class="review-list">${reviewHtml}</div>
           </div>
         </div>`;
       return;
+    }
+
+    // Show motivational animal every 10 questions
+    let motivationalHtml = '';
+    if (state.quiz.index > 0 && state.quiz.index % 10 === 0) {
+      const msg = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      motivationalHtml = `
+        <div class="motivational-container">
+          <div class="motivational-animal">${msg.animal}</div>
+          <div class="motivational-text">
+            <div class="motivational-label">Milestone!</div>
+            <div class="motivational-message">${msg.msg}</div>
+          </div>
+        </div>`;
     }
 
     const opts = ['A','B','C','D'].filter(l => q.answers?.[l]).map(l => `
@@ -1871,13 +1995,15 @@
       </button>`).join('');
 
     els.quizArea.innerHTML = `
+      ${motivationalHtml}
       <div class="quiz-card-modern">
         <div class="quiz-q-header">
-          <div class="quiz-q-count">Question ${state.quiz.index+1}</div>
+          <div class="quiz-q-count">Question ${state.quiz.index+1} of ${total}</div>
           <div class="quiz-q-text-large">${escapeHtml(q.question || '')}</div>
         </div>
         <div class="quiz-options-list">${opts}</div>
         <div class="quiz-feedback hidden" id="feedbackArea"></div>
+        <div class="quiz-action-buttons hidden" id="actionButtons"></div>
       </div>`;
 
     document.querySelectorAll('.quiz-opt-btn').forEach(btn => btn.addEventListener('click', () => handleAnswer(btn.dataset.choice)));
@@ -1888,6 +2014,7 @@
     state.quiz.answered = true;
     const q = state.quiz.questions[state.quiz.index];
     const feedback = document.getElementById('feedbackArea');
+    const actionButtons = document.getElementById('actionButtons');
     const buttons = [...document.querySelectorAll('.quiz-opt-btn')];
     buttons.forEach(b => b.disabled = true);
     const picked = buttons.find(b => b.dataset.choice === choice);
@@ -1904,6 +2031,7 @@
       if (correctBtn) correctBtn.classList.add('correct');
       feedback.className = 'quiz-feedback wrong';
       feedback.innerHTML = `✗ Incorrect. The correct answer was ${q.correct}.`;
+      state.quiz.wrongAnswers.push(q);
     }
     feedback.classList.remove('hidden');
 
@@ -1919,31 +2047,68 @@
     els.quizCorrect.textContent = state.quiz.score;
     els.progressBar.style.width = `${Math.round(((state.quiz.index+1)/state.quiz.questions.length)*100)}%`;
 
-    // Auto-advance after 2 seconds
-    setTimeout(() => {
-      if (state.quiz.index + 1 < state.quiz.questions.length) {
-        state.quiz.index++;
-        state.quiz.answered = false;
-        renderQuiz();
-      } else {
-        // Quiz finished, show results
-        state.quiz.index++;
-        renderQuiz();
-      }
-    }, 2000);
+    // If correct, auto-advance after 1.5 seconds
+    if (isCorrect) {
+      setTimeout(() => {
+        if (state.quiz.index + 1 < state.quiz.questions.length) {
+          state.quiz.index++;
+          state.quiz.answered = false;
+          renderQuiz();
+        } else {
+          state.quiz.index++;
+          renderQuiz();
+        }
+      }, 1500);
+    } else {
+      // If wrong, show Next button and End Quiz button
+      actionButtons.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="nextQuestion()" style="flex: 1;">Next →</button>
+          <button class="btn btn-secondary" onclick="endQuiz()">End Quiz</button>
+        </div>`;
+      actionButtons.classList.remove('hidden');
+    }
+  }
+
+  function nextQuestion() {
+    if (state.quiz.index + 1 < state.quiz.questions.length) {
+      state.quiz.index++;
+      state.quiz.answered = false;
+      renderQuiz();
+    } else {
+      state.quiz.index++;
+      renderQuiz();
+    }
+  }
+
+  function endQuiz() {
+    state.quiz.index = state.quiz.questions.length;
+    renderQuiz();
   }
 
   function restartQuiz() {
     if (!state.questions.length) { renderQuiz(); return; }
-    state.quiz.questions = []; state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false; state.quiz.results = [];
-    renderQuiz(); showToast('Quiz reset.');
+    state.quiz.questions = [];
+    state.quiz.index = 0;
+    state.quiz.score = 0;
+    state.quiz.answered = false;
+    state.quiz.results = [];
+    state.quiz.wrongAnswers = [];
+    renderQuiz();
+    showToast('Quiz reset.');
   }
 
   function clearAll() {
     if (!confirm('Delete every saved question?')) return;
     if (db) { alert('To clear the shared bank, delete documents in Firestore directly.'); return; }
-    state.questions = []; state.quiz.questions = []; state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false;
-    saveLocal(); renderAll(); showToast('All questions cleared.');
+    state.questions = [];
+    state.quiz.questions = [];
+    state.quiz.index = 0;
+    state.quiz.score = 0;
+    state.quiz.answered = false;
+    saveLocal();
+    renderAll();
+    showToast('All questions cleared.');
   }
 
   // ── Import / Export ────────────────────────────────────────
@@ -1951,7 +2116,8 @@
   function exportJSON() {
     const payload = JSON.stringify({ questions: state.questions, quizAttempts: state.quiz.attempts }, null, 2);
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([payload],{type:'application/json'})), download:'studybank.json' });
-    a.click(); URL.revokeObjectURL(a.href);
+    a.click();
+    URL.revokeObjectURL(a.href);
     showToast('Exported as studybank.json');
   }
 
@@ -1966,7 +2132,7 @@
       correct: ['A','B','C','D'].includes(q.correct) ? q.correct : 'A',
       createdAt: Number(q.createdAt || Date.now())
     })).filter(q => q.question && q.answers.A && q.answers.B);
-    
+
     const existingNorm = new Set(state.questions.map(q => normalizeText(q.question)));
     const toAdd = normalized.filter(q => !existingNorm.has(normalizeText(q.question)));
     const skipped = normalized.length - toAdd.length;
@@ -1985,7 +2151,7 @@
       saveLocal();
       incrementUserQuestions();
     }
-    
+
     renderAll();
     const msg = toAdd.length
       ? `Successfully added ${toAdd.length} question${toAdd.length === 1 ? '' : 's'}${skipped ? ` · ${skipped} duplicate${skipped === 1 ? '' : 's'} skipped` : ''}.`
@@ -2049,7 +2215,8 @@
       answers[3] = labeledAnswers['D'] || '';
     } else if (hasTFLines || hasTFInQuestion) {
       questionParts = merged.filter(l => !tfPattern.test(l.trim()));
-      answers[0] = 'True'; answers[1] = 'False';
+      answers[0] = 'True';
+      answers[1] = 'False';
     } else {
       if (merged.length === 1) { questionParts = merged; }
       else { questionParts = [merged[0]]; merged.slice(1).forEach((l,i) => { if (i<4) answers[i]=l; }); }
@@ -2130,17 +2297,138 @@
     if (db) {
       db.collection('questions').add(item).then(() => { resetForm(); incrementUserQuestions(); showToast('✓ Saved to shared bank!'); }).catch(() => showToast('Could not save — check Firebase.'));
     } else {
-      state.questions.unshift(item); saveLocal(); renderAll(); resetForm(); incrementUserQuestions(); showToast('✓ Saved locally.');
+      state.questions.unshift(item);
+      saveLocal();
+      renderAll();
+      resetForm();
+      incrementUserQuestions();
+      showToast('✓ Saved locally.');
     }
   }
 
-  // ── Drag & drop OCR ────────────────────────────────────────
+  // ── Question Selector ──────────────────────────────────────
+
+  function renderQuestionSelector() {
+    const html = state.questions.map((q, i) => {
+      const isSelected = state.selectedQuestions.has(q.id);
+      return `
+        <div class="question-selector-card ${isSelected ? 'selected' : ''}" onclick="toggleQuestionSelection('${q.id}', this)">
+          <label class="question-selector-label">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} style="cursor: pointer;" />
+            <span class="question-selector-text">${escapeHtml(q.question.substring(0, 60))}${q.question.length > 60 ? '...' : ''}</span>
+          </label>
+        </div>`;
+    }).join('');
+
+    els.questionSelectorList.innerHTML = html || '<div class="empty-state"><p>No questions available.</p></div>';
+  }
+
+  function toggleQuestionSelection(id, element) {
+    if (state.selectedQuestions.has(id)) {
+      state.selectedQuestions.delete(id);
+      element.classList.remove('selected');
+    } else {
+      state.selectedQuestions.add(id);
+      element.classList.add('selected');
+    }
+  }
+
+  function selectAllQuestions() {
+    state.questions.forEach(q => state.selectedQuestions.add(q.id));
+    renderQuestionSelector();
+  }
+
+  function deselectAllQuestions() {
+    state.selectedQuestions.clear();
+    renderQuestionSelector();
+  }
+
+  // ── Firebase ───────────────────────────────────────────────
+
+  let db = null;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } catch (e) {
+    console.log('Firebase not available');
+  }
+
+  function listenToQuestions() {
+    if (!db) return;
+    db.collection('questions').onSnapshot(snapshot => {
+      const incoming = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        incoming.push({
+          id: data.id || doc.id,
+          question: cleanText(data.question),
+          answers: { A: cleanText(data.answers?.A), B: cleanText(data.answers?.B), C: cleanText(data.answers?.C), D: cleanText(data.answers?.D) },
+          correct: data.correct,
+          createdAt: data.createdAt || Date.now()
+        });
+      });
+      const existingNorm = new Set(state.questions.map(q => normalizeText(q.question)));
+      const toAdd = incoming.filter(q => !existingNorm.has(normalizeText(q.question)));
+      state.questions = [...state.questions, ...toAdd];
+      renderAll();
+      if (toAdd.length) els.syncPill.className = 'status-dot synced';
+    });
+  }
+
+  function listenToLeaderboard() {
+    if (!db) return;
+    db.collection('leaderboard').onSnapshot(snapshot => {
+      state.leaderboard = {};
+      snapshot.forEach(doc => {
+        state.leaderboard[doc.id] = doc.data().count || 0;
+      });
+      renderLeaderboard();
+    });
+  }
+
+  function incrementUserQuestions() {
+    if (!db || !state.userName) return;
+    const ref = db.collection('leaderboard').doc(state.userName);
+    ref.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true }).catch(() => {});
+  }
+
+  function renderLeaderboard() {
+    const sorted = Object.entries(state.leaderboard).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    if (sorted.length === 0) {
+      els.leaderboardList.innerHTML = '<div class="leaderboard-item" style="color:var(--text3);">No data yet</div>';
+      return;
+    }
+    const top3 = sorted.slice(0, 3);
+    const podiumHtml = [
+      top3[1] ? `<div class="podium-slot"><div class="podium-rank second"><div class="podium-medal">🥈</div><div class="podium-name">${escapeHtml(top3[1][0])}</div><div class="podium-count">${top3[1][1]}</div></div></div>` : '<div class="podium-slot"><div class="podium-rank second"><div class="podium-medal">🥈</div><div class="podium-name">—</div><div class="podium-count">0</div></div></div>',
+      top3[0] ? `<div class="podium-slot"><div class="podium-rank first"><div class="podium-medal">🥇</div><div class="podium-name">${escapeHtml(top3[0][0])}</div><div class="podium-count">${top3[0][1]}</div></div></div>` : '<div class="podium-slot"><div class="podium-rank first"><div class="podium-medal">🥇</div><div class="podium-name">—</div><div class="podium-count">0</div></div></div>',
+      top3[2] ? `<div class="podium-slot"><div class="podium-rank third"><div class="podium-medal">🥉</div><div class="podium-name">${escapeHtml(top3[2][0])}</div><div class="podium-count">${top3[2][1]}</div></div></div>` : '<div class="podium-slot"><div class="podium-rank third"><div class="podium-medal">🥉</div><div class="podium-name">—</div><div class="podium-count">0</div></div></div>'
+    ];
+    els.leaderboardPodium.innerHTML = podiumHtml.join('');
+    const restHtml = sorted.slice(3).map((e, i) => `
+      <div class="leaderboard-item">
+        <div class="leaderboard-rank">${i + 4}</div>
+        <div class="leaderboard-name">${escapeHtml(e[0])}</div>
+        <div class="leaderboard-count">${e[1]}</div>
+      </div>`).join('');
+    els.leaderboardList.innerHTML = restHtml;
+  }
+
+  function loadLeaderboard() {
+    const stored = localStorage.getItem(LEADERBOARD_KEY);
+    if (stored) {
+      try {
+        state.leaderboard = JSON.parse(stored);
+      } catch (e) { console.error(e); }
+    }
+  }
 
   const dz = els.ocrDropZone;
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
   dz.addEventListener('drop', e => {
-    e.preventDefault(); dz.classList.remove('drag-over');
+    e.preventDefault();
+    dz.classList.remove('drag-over');
     const file = e.dataTransfer?.files?.[0];
     if (file && file.type.startsWith('image/')) runOCR(file);
   });
@@ -2164,6 +2452,11 @@
   els.sortOldestBtn.addEventListener('click', () => { state.sortMode = 'oldest'; renderBrowse(); });
   els.clearAllBtn.addEventListener('click', clearAll);
   els.startQuizBtn.addEventListener('click', startQuiz);
+  els.selectQuestionsBtn.addEventListener('click', () => {
+    state.selectedQuestions.clear();
+    renderQuestionSelector();
+    setTab('selector');
+  });
   els.restartQuizBtn.addEventListener('click', restartQuiz);
   els.exportBtn.addEventListener('click', exportJSON);
   els.importInput.addEventListener('change', async e => {
@@ -2184,6 +2477,10 @@
       applyParsedOCR(text);
     } catch { showToast('Clipboard access blocked — try a different browser.'); }
   });
+  els.selectAllBtn.addEventListener('click', selectAllQuestions);
+  els.deselectAllBtn.addEventListener('click', deselectAllQuestions);
+  els.startSelectedQuizBtn.addEventListener('click', startSelectedQuiz);
+  els.backFromSelectorBtn.addEventListener('click', () => setTab('quiz'));
 
   // ── Boot ───────────────────────────────────────────────────
 
