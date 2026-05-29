@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyBank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root {
+      --bg: #080c14;
+      --surface: #0d1424;
+      --surface2: #111827;
+      --surface3: #1a2235;
+      --border: rgba(255,255,255,0.07);
+      --border-bright: rgba(255,255,255,0.13);
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.15);
+      --blue-glow: rgba(59,130,246,0.35);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
+      --green-glow: rgba(34,197,94,0.3);
+      --red: #f43f5e;
+      --red-dim: rgba(244,63,94,0.12);
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --gold: #fbbf24;
+      --silver: #e5e7eb;
+      --bronze: #d97706;
+      --r: 16px;
+      --r-lg: 20px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 48px rgba(0,0,0,0.5);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── LAYOUT ─────────────────────────────── */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,12,20,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      height: 60px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 32px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .nav-logo span {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .nav-tab {
+      appearance: none;
+      background: transparent;
+      border: none;
+      color: var(--text2);
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .nav-tab.active { color: var(--text); background: rgba(255,255,255,0.08); }
+    .nav-tab .tab-icon { font-size: 1rem; line-height: 1; }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .user-pill strong { color: var(--blue); }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text3);
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text3);
+    }
+
+    .status-dot.synced { color: var(--green); }
+    .status-dot.synced::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.local { color: var(--amber); }
+    .status-dot.local::before { background: var(--amber); }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 0;
+      align-items: start;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 28px 24px;
+      gap: 20px;
+    }
+
+    /* ─── PANELS ──────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .panel-body { padding: 20px 22px; }
+
+    /* ─── STATS ROW ───────────────────────────── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-num {
+      font-size: 1.7rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-lbl {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── FORM ────────────────────────────────── */
+    .stack { display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      border-radius: var(--r);
+      padding: 11px 14px;
+      font: inherit;
+      font-size: 0.93rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--text3); }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-dim);
+      background: var(--surface3);
+    }
+
+    textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    .answers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .answer-field-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .answer-label-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .answer-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: var(--surface3);
+      border: 1px solid var(--border-bright);
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text2);
+      flex-shrink: 0;
+    }
+
+    /* ─── OCR BOX ─────────────────────────────── */
+    .ocr-zone {
+      border: 2px dashed var(--border-bright);
+      border-radius: var(--r);
+      padding: 18px;
+      background: var(--surface2);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .ocr-zone.drag-over {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+    }
+
+    .ocr-zone-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ocr-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue-dim), rgba(139,92,246,0.15));
+      border: 1px solid rgba(59,130,246,0.25);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .ocr-zone-title { font-size: 0.93rem; font-weight: 700; color: var(--text); }
+    .ocr-zone-sub { font-size: 0.82rem; color: var(--text3); margin-top: 2px; }
+
+    .ocr-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .ocr-status {
+      font-size: 0.82rem;
+      color: var(--text3);
+      min-height: 18px;
+      line-height: 1.4;
+    }
+
+    .ocr-status.success { color: var(--green); }
+    .ocr-status.error { color: var(--red); }
+    .ocr-status.loading { color: var(--blue); }
+
+    /* ─── BUTTONS ─────────────────────────────── */
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: var(--r);
+      padding: 10px 16px;
+      font: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.12s, box-shadow 0.12s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: white;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+      padding: 12px 20px;
+      font-size: 0.93rem;
+    }
+
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(59,130,246,0.45); }
+
+    .btn-secondary {
+      background: var(--surface3);
+      color: var(--text2);
+      border: 1px solid var(--border-bright);
+    }
+
+    .btn-secondary:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text3);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { color: var(--text2); border-color: var(--border-bright); }
+
+    .btn-danger {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(244,63,94,0.25);
+    }
+
+    .btn-danger:hover { background: rgba(244,63,94,0.2); }
+
+    .btn-green {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.25);
+    }
+
+    .btn-green:hover { background: rgba(34,197,94,0.2); }
+
+    .btn-sm { padding: 7px 12px; font-size: 0.82rem; border-radius: 10px; }
+    .btn-xs { padding: 5px 9px; font-size: 0.78rem; border-radius: 8px; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* ─── BROWSE ──────────────────────────────── */
+    .browse-controls {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .browse-controls .field { flex: 1; min-width: 180px; }
+
+    .sort-btns {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sort-btns .ml { margin-left: auto; }
+
+    .q-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .q-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px 18px;
+      transition: border-color 0.15s;
+    }
+
+    .q-card:hover { border-color: var(--border-bright); }
+
+    .q-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .q-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 4px;
+    }
+
+    .q-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .ans-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .ans-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      color: var(--text2);
+      line-height: 1.3;
+    }
+
+    .ans-pill.correct {
+      background: var(--green-dim);
+      border-color: rgba(34,197,94,0.3);
+      color: var(--green);
+    }
+
+    .ans-letter {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .ans-pill.correct .ans-letter {
+      background: rgba(34,197,94,0.2);
+    }
+
+    .q-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .q-meta { font-size: 0.78rem; color: var(--text3); }
+
+    /* ─── QUIZ REDESIGN ────────────────────────── */
+    .quiz-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .quiz-stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+    }
+
+    .quiz-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .quiz-stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .quiz-stat-value {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: var(--blue);
+    }
+
+    .quiz-card-modern {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      position: relative;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .quiz-q-header {
+      margin-bottom: 24px;
+    }
+
+    .quiz-q-count {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .quiz-q-text-large {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .quiz-options-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .quiz-opt-btn {
+      appearance: none;
+      background: var(--surface3);
+      border: 2px solid var(--border-bright);
+      border-radius: var(--r);
+      padding: 16px 20px;
+      color: var(--text);
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+    }
+
+    .quiz-opt-btn:hover:not(:disabled) {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+      transform: translateX(4px);
+    }
+
+    .quiz-opt-btn.correct {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .quiz-opt-btn.wrong {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .quiz-opt-btn:disabled { cursor: default; }
+
+    .opt-indicator {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      font-weight: 900;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .quiz-opt-btn.correct .opt-indicator { background: var(--green); color: white; }
+    .quiz-opt-btn.wrong .opt-indicator { background: var(--red); color: white; }
+
+    .quiz-feedback {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: var(--r);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    .quiz-feedback.correct { background: var(--green-dim); color: var(--green); }
+    .quiz-feedback.wrong { background: var(--red-dim); color: var(--red); }
+
+    .quiz-finished-card {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .quiz-result-icon { font-size: 4rem; margin-bottom: 16px; }
+    .quiz-result-score { font-size: 2.5rem; font-weight: 900; margin-bottom: 8px; }
+    .quiz-result-msg { color: var(--text2); font-size: 1.1rem; margin-bottom: 24px; }
+
+    .review-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .review-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .review-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .review-item {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .review-item.review-correct {
+      border-left-color: var(--green);
+      background: rgba(34, 197, 94, 0.05);
+    }
+
+    .review-item.review-wrong {
+      border-left-color: var(--red);
+      background: rgba(244, 63, 94, 0.05);
+    }
+
+    .review-q-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .review-q-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .review-answers {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .review-answer-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: var(--text2);
+      transition: all 0.15s;
+    }
+
+    .review-answer-option.correct {
+      background: var(--green-dim);
+      border-color: rgba(34, 197, 94, 0.3);
+      color: var(--green);
+    }
+
+    .review-answer-option.wrong {
+      background: var(--red-dim);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: var(--red);
+    }
+
+    .review-answer-option.correct-highlight {
+      background: var(--green-dim);
+      border-color: rgba(34, 197, 94, 0.5);
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .review-answer-letter {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .review-answer-option.correct .review-answer-letter,
+    .review-answer-option.correct-highlight .review-answer-letter {
+      background: rgba(34, 197, 94, 0.2);
+    }
+
+    .review-answer-option.wrong .review-answer-letter {
+      background: rgba(244, 63, 94, 0.2);
+    }
+
+    .review-answer-text {
+      flex: 1;
+    }
+
+    .review-badge {
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .review-badge-correct {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ─── LEADERBOARD ─────────────────────────── */
+    .leaderboard-podium {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: flex-end;
+    }
+
+    .podium-slot {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .podium-rank {
+      width: 100%;
+      border-radius: var(--r);
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .podium-rank.first {
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      color: #000;
+      order: 2;
+      min-height: 100px;
+    }
+
+    .podium-rank.second {
+      background: linear-gradient(135deg, var(--silver), #d1d5db);
+      color: #000;
+      order: 1;
+      min-height: 80px;
+    }
+
+    .podium-rank.third {
+      background: linear-gradient(135deg, var(--bronze), #ea580c);
+      color: white;
+      order: 3;
+      min-height: 60px;
+    }
+
+    .podium-medal { font-size: 2rem; }
+    .podium-name { font-size: 0.75rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .podium-count { font-size: 1.3rem; font-weight: 900; }
+
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      font-size: 0.9rem;
+    }
+
+    .leaderboard-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--surface3);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .leaderboard-count {
+      font-weight: 900;
+      color: var(--blue);
+    }
+
+    /* ─── SIDEBAR ─────────────────────────────── */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .side-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .side-head {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .side-body { padding: 14px 16px; }
+
+    .help-step {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .help-step:last-child { border-bottom: none; }
+
+    .help-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      background: var(--blue-dim);
+      border: 1px solid rgba(59,130,246,0.2);
+      color: var(--blue);
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .help-text { font-size: 0.83rem; color: var(--text2); line-height: 1.5; }
+    .help-text strong { color: var(--text); font-weight: 700; }
+
+    .toolbar-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── EMPTY / TOAST ───────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text3);
+    }
+
+    .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state p { font-size: 0.9rem; line-height: 1.5; }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 200;
+      background: var(--surface3);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-lg);
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+      max-width: min(90vw, 480px);
+      text-align: center;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .hidden { display: none !important; }
+
+    .badge-count {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 1px 7px;
+    }
+
+    /* ─── MODAL ───────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: grid;
+      place-items: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .modal-desc {
+      font-size: 0.9rem;
+      color: var(--text2);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-input {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* ─── RESPONSIVE ──────────────────────────── */
+    @media (max-width: 1024px) {
+      .main { grid-template-columns: 1fr; padding: 16px; }
+      .sidebar { display: grid; grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .topnav { padding: 0 14px; }
+      .nav-logo span { display: none; }
+      .main { padding: 12px; gap: 12px; }
+      .answers-grid { grid-template-columns: 1fr; }
+      .ans-grid { grid-template-columns: 1fr; }
+      .sidebar { grid-template-columns: 1fr; }
+      .stats-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .stat-num { font-size: 1.3rem; }
+      .browse-controls { flex-direction: column; }
+      .browse-controls .field { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- NAME MODAL -->
+  <div class="modal-overlay show" id="nameModal">
+    <div class="modal-content">
+      <div class="modal-title">Welcome to StudyBank 📚</div>
+      <div class="modal-desc">What's your name? This will be used for the leaderboard to track your question uploads.</div>
+      <input class="modal-input field" id="nameInput" type="text" placeholder="Enter your name…" />
+      <div class="modal-btns">
+        <button class="btn btn-primary" id="nameSubmitBtn" style="flex:1;">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="topnav">
+    <a class="nav-logo" href="#">
+      <div class="logo-icon">📚</div>
+      <span>StudyBank</span>
+    </a>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="add">
+        <span class="tab-icon">✏️</span> Add
+      </button>
+      <button class="nav-tab" data-tab="browse">
+        <span class="tab-icon">📋</span> Browse
+        <span class="badge-count" id="bankCountPill">0</span>
+      </button>
+      <button class="nav-tab" data-tab="quiz">
+        <span class="tab-icon">🎯</span> Quiz
+      </button>
+    </div>
+    <div class="nav-right">
+      <div class="user-pill">👤 <strong id="userNameDisplay">Guest</strong></div>
+      <div class="status-dot local" id="syncPill">Local</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- STATS -->
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="stat-num" id="statQuestions">0</div>
+          <div class="stat-lbl">Questions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statAttempts">0</div>
+          <div class="stat-lbl">Quiz runs</div>
+        </div>
+      </div>
+
+      <!-- ADD VIEW -->
+      <div class="panel" id="addViewPanel">
+        <div class="panel-head">
+          <h2 id="addPanelTitle">Add a question</h2>
+          <div class="toolbar-group">
+            <label class="btn btn-secondary btn-sm" for="importInput" style="cursor:pointer;">⬇ Import</label>
+            <input id="importInput" type="file" accept="application/json" class="hidden" />
+            <button class="btn btn-secondary btn-sm" id="exportBtn">⬆ Export</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="stack" id="addView">
+
+            <!-- OCR ZONE -->
+            <div class="ocr-zone" id="ocrDropZone">
+              <div class="ocr-zone-top">
+                <div class="ocr-icon">🔍</div>
+                <div>
+                  <div class="ocr-zone-title">Screenshot Scan</div>
+                  <div class="ocr-zone-sub">Drop an image or click to upload — free OCR will extract and fill all fields</div>
+                </div>
+              </div>
+              <input id="ocrInput" type="file" accept="image/*" style="display:none;" />
+              <div class="ocr-actions">
+                <label class="btn btn-secondary btn-sm" for="ocrInput" style="cursor:pointer;">📷 Choose image</label>
+                <button class="btn btn-ghost btn-sm" id="pasteOCRBtn">📋 Paste text</button>
+                <button class="btn btn-ghost btn-sm" id="fillFromOCRBtn">↺ Re-fill</button>
+              </div>
+              <div class="ocr-status" id="ocrStatus">Tip: works best with a clear screenshot of one question at a time.</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- QUESTION -->
+            <div class="field">
+              <label for="questionInput">Question</label>
+              <textarea id="questionInput" placeholder="Type or paste the question here..."></textarea>
+            </div>
+
+            <!-- ANSWERS -->
+            <div>
+              <label style="display:block; margin-bottom:10px;">Answer choices</label>
+              <div class="answers-grid">
+                <div class="answer-field-wrap">
+                  <div class="answer-label-row">
+                    <div class="answer-badge">A</div>
+                    <label for="answerA" style="text-transform:none; letter-spacing:0; font-size:0.82rem; color:var(--text3);">or True</label>
+                  </div>
+                  <input id="answerA" type="text" placeholder="Answer A" />
+                </div>
+                <div class="answer-field-wrap">
+                  <div class="answer-label-row">
+                    <div class="answer-badge">B</div>
+                    <label for="answerB" style="text-transform:none; letter-spacing:0; font-size:0.82rem; color:var(--text3);">or False</label>
+                  </div>
+                  <input id="answerB" type="text" placeholder="Answer B" />
+                </div>
+                <div class="answer-field-wrap">
+                  <div class="answer-label-row">
+                    <div class="answer-badge" style="opacity:0.5;">C</div>
+                    <label for="answerC" style="text-transform:none; letter-spacing:0; font-size:0.82rem; color:var(--text3);">optional</label>
+                  </div>
+                  <input id="answerC" type="text" placeholder="Answer C" />
+                </div>
+                <div class="answer-field-wrap">
+                  <div class="answer-label-row">
+                    <div class="answer-badge" style="opacity:0.5;">D</div>
+                    <label for="answerD" style="text-transform:none; letter-spacing:0; font-size:0.82rem; color:var(--text3);">optional</label>
+                  </div>
+                  <input id="answerD" type="text" placeholder="Answer D" />
+                </div>
+              </div>
+            </div>
+
+            <!-- CORRECT -->
+            <div class="field">
+              <label for="correctSelect">Correct answer</label>
+              <select id="correctSelect">
+                <option value="A">A — True</option>
+                <option value="B">B — False</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </div>
+
+            <!-- SUBMIT ROW -->
+            <div class="btn-row">
+              <button class="btn btn-primary" id="addQuestionBtn">✓ Save question</button>
+              <button class="btn btn-ghost" id="clearFormBtn">✕ Clear form</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- BROWSE VIEW -->
+      <div class="panel hidden" id="browseViewPanel">
+        <div class="panel-head">
+          <h2>Question Bank</h2>
+          <button class="btn btn-danger btn-xs" id="clearAllBtn">🗑 Clear all</button>
+        </div>
+        <div class="panel-body">
+          <div id="browseView">
+            <div class="browse-controls">
+              <div class="field">
+                <label for="searchInput">Search questions</label>
+                <input id="searchInput" type="text" placeholder="Search by text…" />
+              </div>
+            </div>
+            <div class="sort-btns">
+              <button class="btn btn-secondary btn-xs" id="sortNewestBtn">Newest</button>
+              <button class="btn btn-secondary btn-xs" id="sortOldestBtn">Oldest</button>
+            </div>
+            <div id="browseList" class="q-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ VIEW -->
+      <div class="panel hidden" id="quizViewPanel">
+        <div class="panel-head">
+          <h2>Quiz mode</h2>
+          <div class="toolbar-group">
+            <button class="btn btn-green btn-sm" id="startQuizBtn">▶ Start Quiz</button>
+            <button class="btn btn-ghost btn-sm" id="restartQuizBtn">↺ Reset</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="quizView">
+            <div class="quiz-layout">
+              <div class="quiz-stats-bar">
+                <div class="quiz-stat-item">
+                  <div class="quiz-stat-label">Correct</div>
+                  <div class="quiz-stat-value" id="quizCorrect">0</div>
+                </div>
+                <div class="quiz-stat-item">
+                  <div class="quiz-stat-label">Progress</div>
+                  <div class="quiz-stat-value" id="quizProgress">0/0</div>
+                </div>
+              </div>
+              <div class="progress-bar"><div id="progressBar" style="width:0%"></div></div>
+              
+              <div id="quizArea">
+                <div class="empty-state">
+                  <div class="empty-icon">🎯</div>
+                  <p>Start a quiz to mix all your saved questions together.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <!-- Leaderboard -->
+      <div class="side-panel">
+        <div class="side-head">🏆 Leaderboard</div>
+        <div class="side-body">
+          <div class="leaderboard-podium" id="leaderboardPodium">
+            <div class="podium-slot">
+              <div class="podium-rank second">
+                <div class="podium-medal">🥈</div>
+                <div class="podium-name">—</div>
+                <div class="podium-count">0</div>
+              </div>
+            </div>
+            <div class="podium-slot">
+              <div class="podium-rank first">
+                <div class="podium-medal">🥇</div>
+                <div class="podium-name">—</div>
+                <div class="podium-count">0</div>
+              </div>
+            </div>
+            <div class="podium-slot">
+              <div class="podium-rank third">
+                <div class="podium-medal">🥉</div>
+                <div class="podium-name">—</div>
+                <div class="podium-count">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="leaderboardList">
+            <div class="leaderboard-item" style="color:var(--text3);">No data yet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Firebase setup guide -->
+      <div class="side-panel">
+        <div class="side-head">🔥 Firebase Shared Sync</div>
+        <div class="side-body">
+          <div class="help-step">
+            <div class="help-num">1</div>
+            <div class="help-text">Create a project at <strong>console.firebase.google.com</strong></div>
+          </div>
+          <div class="help-step">
+            <div class="help-num">2</div>
+            <div class="help-text">Enable <strong>Firestore Database</strong> in test mode</div>
+          </div>
+          <div class="help-step">
+            <div class="help-num">3</div>
+            <div class="help-text">Paste your <strong>firebaseConfig</strong> object into the code</div>
+          </div>
+          <div class="help-step">
+            <div class="help-num">4</div>
+            <div class="help-text">Host on <strong>Firebase Hosting, Netlify, or Vercel</strong> — share the link with friends</div>
+          </div>
+          <div class="help-step">
+            <div class="help-num">5</div>
+            <div class="help-text">Questions sync in real-time — everyone's additions appear instantly</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div class="side-panel">
+        <div class="side-head">💡 Tips</div>
+        <div class="side-body" style="display:flex; flex-direction:column; gap:10px;">
+          <div style="font-size:0.83rem; color:var(--text2); line-height:1.5; padding-bottom:10px; border-bottom:1px solid var(--border);">
+            <strong style="color:var(--text);">OCR screenshot</strong><br>
+            Drop a screenshot and AI will fill all fields automatically. Works great for textbook screenshots.
+          </div>
+          <div style="font-size:0.83rem; color:var(--text2); line-height:1.5;">
+            <strong style="color:var(--text);">True / False</strong><br>
+            Only fill A and B — A = True, B = False.
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = "question_bank_builder_v2";
+  const LEADERBOARD_KEY = "studybank_leaderboard";
+  const USER_KEY = "studybank_user";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyATUndeZI0qOD-g66UfNAYtU9UPkRrTzKY",
+    authDomain: "aahquestionbank.firebaseapp.com",
+    projectId: "aahquestionbank",
+    storageBucket: "aahquestionbank.firebasestorage.app",
+    messagingSenderId: "436069846818",
+    appId: "1:436069846818:web:ae91d7508c4d4dcdc35f7b"
+  };
+
+  const els = {
+    nameModal: document.getElementById('nameModal'),
+    nameInput: document.getElementById('nameInput'),
+    nameSubmitBtn: document.getElementById('nameSubmitBtn'),
+    userNameDisplay: document.getElementById('userNameDisplay'),
+    tabBtns: document.querySelectorAll('.nav-tab'),
+    addViewPanel: document.getElementById('addViewPanel'),
+    browseViewPanel: document.getElementById('browseViewPanel'),
+    quizViewPanel: document.getElementById('quizViewPanel'),
+    addView: document.getElementById('addView'),
+    browseView: document.getElementById('browseView'),
+    quizView: document.getElementById('quizView'),
+    questionInput: document.getElementById('questionInput'),
+    answerA: document.getElementById('answerA'),
+    answerB: document.getElementById('answerB'),
+    answerC: document.getElementById('answerC'),
+    answerD: document.getElementById('answerD'),
+    correctSelect: document.getElementById('correctSelect'),
+    addQuestionBtn: document.getElementById('addQuestionBtn'),
+    clearFormBtn: document.getElementById('clearFormBtn'),
+    browseList: document.getElementById('browseList'),
+    searchInput: document.getElementById('searchInput'),
+    sortNewestBtn: document.getElementById('sortNewestBtn'),
+    sortOldestBtn: document.getElementById('sortOldestBtn'),
+    clearAllBtn: document.getElementById('clearAllBtn'),
+    startQuizBtn: document.getElementById('startQuizBtn'),
+    restartQuizBtn: document.getElementById('restartQuizBtn'),
+    quizArea: document.getElementById('quizArea'),
+    quizCorrect: document.getElementById('quizCorrect'),
+    quizProgress: document.getElementById('quizProgress'),
+    progressBar: document.getElementById('progressBar'),
+    toast: document.getElementById('toast'),
+    bankCountPill: document.getElementById('bankCountPill'),
+    syncPill: document.getElementById('syncPill'),
+    statQuestions: document.getElementById('statQuestions'),
+    statAttempts: document.getElementById('statAttempts'),
+    exportBtn: document.getElementById('exportBtn'),
+    importInput: document.getElementById('importInput'),
+    ocrInput: document.getElementById('ocrInput'),
+    fillFromOCRBtn: document.getElementById('fillFromOCRBtn'),
+    pasteOCRBtn: document.getElementById('pasteOCRBtn'),
+    ocrStatus: document.getElementById('ocrStatus'),
+    ocrDropZone: document.getElementById('ocrDropZone'),
+    leaderboardPodium: document.getElementById('leaderboardPodium'),
+    leaderboardList: document.getElementById('leaderboardList')
+  };
+
+  const state = {
+    userName: '',
+    questions: [],
+    activeTab: 'add',
+    sortMode: 'newest',
+    search: '',
+    quiz: { questions: [], index: 0, score: 0, answered: false, attempts: 0, results: [] },
+    pendingOCRText: '',
+    leaderboard: {}
+  };
+
+  // ── Utilities ──────────────────────────────────────────────
+
+  function uid() {
+    return crypto.randomUUID ? crypto.randomUUID() : 'q_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+  }
+
+  function showToast(msg) {
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => els.toast.classList.remove('show'), 2200);
+  }
+
+  function cleanText(v) { return String(v || '').trim(); }
+
+  function normalizeText(v) {
+    return cleanText(v).toLowerCase()
+      .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+      .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function currentAnswersFromForm() {
+    return {
+      A: cleanText(els.answerA.value),
+      B: cleanText(els.answerB.value),
+      C: cleanText(els.answerC.value),
+      D: cleanText(els.answerD.value)
+    };
+  }
+
+  function resetForm() {
+    els.questionInput.value = '';
+    els.answerA.value = '';
+    els.answerB.value = '';
+    els.answerC.value = '';
+    els.answerD.value = '';
+    els.correctSelect.value = 'A';
+    state.pendingOCRText = '';
+    setOcrStatus('Tip: works best with a clear screenshot of one question at a time.', '');
+    els.questionInput.focus();
+  }
+
+  function setOcrStatus(msg, type) {
+    els.ocrStatus.textContent = msg;
+    els.ocrStatus.className = 'ocr-status' + (type ? ' ' + type : '');
+  }
+
+  // ── User Management ────────────────────────────────────────
+
+  function saveUserName(name) {
+    state.userName = cleanText(name);
+    localStorage.setItem(USER_KEY, state.userName);
+    els.userNameDisplay.textContent = state.userName;
+    els.nameModal.classList.remove('show');
+  }
+
+  function loadUserName() {
+    const saved = localStorage.getItem(USER_KEY);
+    if (saved) {
+      state.userName = saved;
+      els.userNameDisplay.textContent = state.userName;
+      els.nameModal.classList.remove('show');
+    }
+  }
+
+  // ── Leaderboard ────────────────────────────────────────────
+
+  function loadLeaderboard() {
+    try {
+      const raw = localStorage.getItem(LEADERBOARD_KEY);
+      if (raw) state.leaderboard = JSON.parse(raw);
+    } catch(e) { console.warn('loadLeaderboard error', e); }
+  }
+
+  function listenToLeaderboard() {
+    if (!db) { renderLeaderboard(); return; }
+    db.collection('leaderboard').onSnapshot(snapshot => {
+      state.leaderboard = {};
+      snapshot.docs.forEach(doc => {
+        state.leaderboard[doc.id] = doc.data().count || 0;
+      });
+      renderLeaderboard();
+    }, err => {
+      console.warn('Leaderboard sync error:', err);
+    });
+  }
+
+  function incrementUserQuestions() {
+    if (!state.userName) return;
+    if (db) {
+      db.collection('leaderboard').doc(state.userName).set(
+        { count: firebase.firestore.FieldValue.increment(1) },
+        { merge: true }
+      ).catch(err => console.error('Failed to update leaderboard:', err));
+    } else {
+      if (!state.leaderboard[state.userName]) {
+        state.leaderboard[state.userName] = 0;
+      }
+      state.leaderboard[state.userName]++;
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(state.leaderboard));
+      renderLeaderboard();
+    }
+  }
+
+  function renderLeaderboard() {
+    const sorted = Object.entries(state.leaderboard)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    if (sorted.length === 0) {
+      els.leaderboardList.innerHTML = '<div class="leaderboard-item" style="color:var(--text3);">No data yet</div>';
+      return;
+    }
+
+    const top3 = sorted.slice(0, 3);
+    const rest = sorted.slice(3, 5);
+
+    // Render podium
+    const podiumHtml = `
+      <div class="podium-slot">
+        <div class="podium-rank second">
+          <div class="podium-medal">🥈</div>
+          <div class="podium-name">${top3[1] ? escapeHtml(top3[1][0]) : '—'}</div>
+          <div class="podium-count">${top3[1] ? top3[1][1] : 0}</div>
+        </div>
+      </div>
+      <div class="podium-slot">
+        <div class="podium-rank first">
+          <div class="podium-medal">🥇</div>
+          <div class="podium-name">${top3[0] ? escapeHtml(top3[0][0]) : '—'}</div>
+          <div class="podium-count">${top3[0] ? top3[0][1] : 0}</div>
+        </div>
+      </div>
+      <div class="podium-slot">
+        <div class="podium-rank third">
+          <div class="podium-medal">🥉</div>
+          <div class="podium-name">${top3[2] ? escapeHtml(top3[2][0]) : '—'}</div>
+          <div class="podium-count">${top3[2] ? top3[2][1] : 0}</div>
+        </div>
+      </div>`;
+    els.leaderboardPodium.innerHTML = podiumHtml;
+
+    // Render list (4-5)
+    const listHtml = rest.map((entry, idx) => `
+      <div class="leaderboard-item">
+        <div class="leaderboard-rank">${idx + 4}</div>
+        <div class="leaderboard-name">${escapeHtml(entry[0])}</div>
+        <div class="leaderboard-count">${entry[1]}</div>
+      </div>`).join('');
+    els.leaderboardList.innerHTML = listHtml || '<div class="leaderboard-item" style="color:var(--text3);">No more entries</div>';
+  }
+
+  // ── Tab routing ────────────────────────────────────────────
+
+  function setTab(tab) {
+    state.activeTab = tab;
+    els.tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    els.addViewPanel.classList.toggle('hidden', tab !== 'add');
+    els.browseViewPanel.classList.toggle('hidden', tab !== 'browse');
+    els.quizViewPanel.classList.toggle('hidden', tab !== 'quiz');
+    if (tab === 'browse') renderBrowse();
+    if (tab === 'quiz') renderQuiz();
+  }
+
+  // ── Persistence ────────────────────────────────────────────
+
+  function saveLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: state.questions, quizAttempts: state.quiz.attempts }));
+    renderStats();
+  }
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      state.questions = Array.isArray(p.questions) ? p.questions : [];
+      state.quiz.attempts = Number(p.quizAttempts || 0);
+    } catch(e) { console.warn('loadLocal error', e); }
+  }
+
+  // ── Firebase ───────────────────────────────────────────────
+
+  function setSyncStatus(status) {
+    const pill = els.syncPill;
+    if (status === 'synced')       { pill.textContent = '● Synced';      pill.className = 'status-dot synced'; }
+    else if (status === 'syncing') { pill.textContent = '◌ Connecting…'; pill.className = 'status-dot local'; }
+    else if (status === 'error')   { pill.textContent = '● Error';        pill.className = 'status-dot'; pill.style.color = 'var(--red)'; }
+    else                           { pill.textContent = '● Local only';   pill.className = 'status-dot local'; }
+  }
+
+  function ensureFirebase() {
+    const cfg = firebaseConfig || {};
+    const ok = Object.values(cfg).every(v => typeof v === 'string' && v && !v.includes('PUT_'));
+    if (!ok) { setSyncStatus('local'); return null; }
+    try {
+      firebase.initializeApp(cfg);
+      setSyncStatus('syncing');
+      return firebase.firestore();
+    } catch(e) {
+      console.warn('Firebase init failed', e);
+      setSyncStatus('error');
+      return null;
+    }
+  }
+
+  const db = ensureFirebase();
+
+  function listenToQuestions() {
+    if (!db) { renderAll(); return; }
+    db.collection('questions').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+      state.questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSyncStatus('synced');
+      renderAll();
+    }, err => {
+      console.warn(err);
+      setSyncStatus('error');
+      showToast('Firebase sync failed — check your config and Firestore rules.');
+      renderAll();
+    });
+  }
+
+  // ── Render ─────────────────────────────────────────────────
+
+  function renderStats() {
+    els.statQuestions.textContent = state.questions.length;
+    els.statAttempts.textContent = state.quiz.attempts;
+    els.bankCountPill.textContent = state.questions.length;
+  }
+
+  function getFilteredQuestions() {
+    const search = state.search.toLowerCase();
+    return state.questions.filter(q => {
+      const blob = [q.question, q.answers?.A, q.answers?.B, q.answers?.C, q.answers?.D].filter(Boolean).join(' ').toLowerCase();
+      return !search || blob.includes(search);
+    }).sort((a,b) => state.sortMode === 'newest' ? Number(b.createdAt||0) - Number(a.createdAt||0) : Number(a.createdAt||0) - Number(b.createdAt||0));
+  }
+
+  function formatTime(ts) {
+    return new Date(ts).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  }
+
+  function renderBrowse() {
+    const data = getFilteredQuestions();
+    if (!data.length) {
+      els.browseList.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No questions match. Try a different search or add some questions first.</p></div>';
+      return;
+    }
+    els.browseList.innerHTML = data.map((q, i) => {
+      const letters = ['A','B','C','D'];
+      const ansHtml = letters.filter(l => q.answers?.[l]).map(l => `
+        <div class="ans-pill ${q.correct === l ? 'correct' : ''}">
+          <span class="ans-letter">${l}</span>
+          <span>${escapeHtml(q.answers[l])}</span>
+        </div>`).join('');
+      return `
+        <div class="q-card">
+          <div class="q-card-top">
+            <div style="flex:1;">
+              <div class="q-num">Q${i+1}</div>
+              <div class="q-text">${escapeHtml(q.question || '')}</div>
+            </div>
+            <button class="btn btn-ghost btn-xs" data-delete="${q.id}">✕</button>
+          </div>
+          <div class="ans-grid">${ansHtml}</div>
+          <div class="q-footer">
+            <span class="q-meta">Correct: <strong>${q.correct}</strong> — ${escapeHtml(q.answers?.[q.correct] || '')}</span>
+            <span class="q-meta">${formatTime(q.createdAt || Date.now())}</span>
+          </div>
+        </div>`;
+    }).join('');
+    document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteQuestion(btn.dataset.delete)));
+  }
+
+  async function deleteQuestion(id) {
+    if (!confirm('Delete this question?')) return;
+    if (db) {
+      await db.collection('questions').doc(id).delete();
+    } else {
+      state.questions = state.questions.filter(q => q.id !== id);
+      saveLocal(); renderAll();
+    }
+    showToast('Question deleted.');
+  }
+
+  // ── Quiz ───────────────────────────────────────────────────
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+
+  function startQuiz() {
+    if (!state.questions.length) {
+      els.quizArea.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Add some questions first.</p></div>';
+      return;
+    }
+    state.quiz.questions = shuffle(state.questions);
+    state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false; state.quiz.results = [];
+    state.quiz.attempts++; saveLocal(); renderQuiz();
+    showToast('Quiz started — good luck!');
+  }
+
+  function renderQuiz() {
+    renderStats();
+    if (!state.quiz.questions.length) {
+      els.quizCorrect.textContent = '0';
+      els.quizProgress.textContent = '0/0';
+      els.progressBar.style.width = '0%';
+      els.quizArea.innerHTML = state.questions.length
+        ? '<div class="empty-state"><div class="empty-icon">🎯</div><p>Press Start to mix all questions and begin.</p></div>'
+        : '<div class="empty-state"><div class="empty-icon">📭</div><p>Add questions in the Add tab first.</p></div>';
+      return;
+    }
+
+    const total = state.quiz.questions.length;
+    const q = state.quiz.questions[state.quiz.index];
+
+    els.quizCorrect.textContent = state.quiz.score;
+    els.quizProgress.textContent = `${state.quiz.index}/${total}`;
+    els.progressBar.style.width = `${Math.round((state.quiz.index / total)*100)}%`;
+
+    if (!q) {
+      els.progressBar.style.width = '100%';
+      const pct = Math.round((state.quiz.score/total)*100);
+      const reviewHtml = state.quiz.results.map((r, idx) => {
+        const answerLetters = ['A', 'B', 'C', 'D'].filter(l => r.answers[l]);
+        const answerOptions = answerLetters.map(l => `
+          <div class="review-answer-option ${r.userAnswer === l ? (r.isCorrect ? 'correct' : 'wrong') : ''} ${r.correctAnswer === l && !r.isCorrect ? 'correct-highlight' : ''}">
+            <span class="review-answer-letter">${l}</span>
+            <span class="review-answer-text">${escapeHtml(r.answers[l])}</span>
+            ${r.userAnswer === l ? `<span class="review-badge">${r.isCorrect ? '✓' : '✗'}</span>` : ''}
+            ${r.correctAnswer === l && !r.isCorrect ? `<span class="review-badge-correct">✓ Correct</span>` : ''}
+          </div>`).join('');
+        return `
+          <div class="review-item ${r.isCorrect ? 'review-correct' : 'review-wrong'}">
+            <div class="review-q-num">Q${idx + 1}</div>
+            <div class="review-q-text">${escapeHtml(r.question)}</div>
+            <div class="review-answers">${answerOptions}</div>
+          </div>`;
+      }).join('');
+      els.quizArea.innerHTML = `
+        <div class="quiz-finished-card">
+          <div class="quiz-result-icon">${pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📖'}</div>
+          <div class="quiz-result-score">${state.quiz.score} / ${total}</div>
+          <div class="quiz-result-msg">${pct}% correct — ${pct>=80?'Great work!':pct>=50?'Keep studying!':'Review and try again.'}</div>
+          <button class="btn btn-primary" onclick="startQuiz()" style="margin-bottom:24px;">Try Again</button>
+          <div class="review-section">
+            <div class="review-title">Review</div>
+            <div class="review-list">${reviewHtml}</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const opts = ['A','B','C','D'].filter(l => q.answers?.[l]).map(l => `
+      <button class="quiz-opt-btn" data-choice="${l}">
+        <span class="opt-indicator">${l}</span>
+        <span>${escapeHtml(q.answers[l])}</span>
+      </button>`).join('');
+
+    els.quizArea.innerHTML = `
+      <div class="quiz-card-modern">
+        <div class="quiz-q-header">
+          <div class="quiz-q-count">Question ${state.quiz.index+1}</div>
+          <div class="quiz-q-text-large">${escapeHtml(q.question || '')}</div>
+        </div>
+        <div class="quiz-options-list">${opts}</div>
+        <div class="quiz-feedback hidden" id="feedbackArea"></div>
+      </div>`;
+
+    document.querySelectorAll('.quiz-opt-btn').forEach(btn => btn.addEventListener('click', () => handleAnswer(btn.dataset.choice)));
+  }
+
+  function handleAnswer(choice) {
+    if (state.quiz.answered) return;
+    state.quiz.answered = true;
+    const q = state.quiz.questions[state.quiz.index];
+    const feedback = document.getElementById('feedbackArea');
+    const buttons = [...document.querySelectorAll('.quiz-opt-btn')];
+    buttons.forEach(b => b.disabled = true);
+    const picked = buttons.find(b => b.dataset.choice === choice);
+    const correctBtn = buttons.find(b => b.dataset.choice === q.correct);
+
+    const isCorrect = choice === q.correct;
+    if (isCorrect) {
+      state.quiz.score++;
+      picked.classList.add('correct');
+      feedback.className = 'quiz-feedback correct';
+      feedback.innerHTML = `✓ Correct!`;
+    } else {
+      picked.classList.add('wrong');
+      if (correctBtn) correctBtn.classList.add('correct');
+      feedback.className = 'quiz-feedback wrong';
+      feedback.innerHTML = `✗ Incorrect. The correct answer was ${q.correct}.`;
+    }
+    feedback.classList.remove('hidden');
+
+    // Track the result
+    state.quiz.results.push({
+      question: q.question,
+      userAnswer: choice,
+      correctAnswer: q.correct,
+      isCorrect: isCorrect,
+      answers: q.answers
+    });
+
+    els.quizCorrect.textContent = state.quiz.score;
+    els.progressBar.style.width = `${Math.round(((state.quiz.index+1)/state.quiz.questions.length)*100)}%`;
+
+    // Auto-advance after 2 seconds
+    setTimeout(() => {
+      if (state.quiz.index + 1 < state.quiz.questions.length) {
+        state.quiz.index++;
+        state.quiz.answered = false;
+        renderQuiz();
+      } else {
+        // Quiz finished, show results
+        state.quiz.index++;
+        renderQuiz();
+      }
+    }, 2000);
+  }
+
+  function restartQuiz() {
+    if (!state.questions.length) { renderQuiz(); return; }
+    state.quiz.questions = []; state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false; state.quiz.results = [];
+    renderQuiz(); showToast('Quiz reset.');
+  }
+
+  function clearAll() {
+    if (!confirm('Delete every saved question?')) return;
+    if (db) { alert('To clear the shared bank, delete documents in Firestore directly.'); return; }
+    state.questions = []; state.quiz.questions = []; state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false;
+    saveLocal(); renderAll(); showToast('All questions cleared.');
+  }
+
+  // ── Import / Export ────────────────────────────────────────
+
+  function exportJSON() {
+    const payload = JSON.stringify({ questions: state.questions, quizAttempts: state.quiz.attempts }, null, 2);
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([payload],{type:'application/json'})), download:'studybank.json' });
+    a.click(); URL.revokeObjectURL(a.href);
+    showToast('Exported as studybank.json');
+  }
+
+  async function importJSON(file) {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const incoming = Array.isArray(parsed.questions) ? parsed.questions : [];
+    const normalized = incoming.map(q => ({
+      id: q.id || uid(),
+      question: cleanText(q.question),
+      answers: { A: cleanText(q.answers?.A), B: cleanText(q.answers?.B), C: cleanText(q.answers?.C), D: cleanText(q.answers?.D) },
+      correct: ['A','B','C','D'].includes(q.correct) ? q.correct : 'A',
+      createdAt: Number(q.createdAt || Date.now())
+    })).filter(q => q.question && q.answers.A && q.answers.B);
+    
+    const existingNorm = new Set(state.questions.map(q => normalizeText(q.question)));
+    const toAdd = normalized.filter(q => !existingNorm.has(normalizeText(q.question)));
+    const skipped = normalized.length - toAdd.length;
+
+    if (db && toAdd.length > 0) {
+      showToast(`Uploading ${toAdd.length} question${toAdd.length === 1 ? '' : 's'} to Firebase...`);
+      const batch = db.batch();
+      toAdd.forEach(q => {
+        const ref = db.collection('questions').doc();
+        batch.set(ref, { ...q, id: ref.id });
+      });
+      await batch.commit();
+      incrementUserQuestions();
+    } else if (!db) {
+      state.questions = [...state.questions, ...toAdd];
+      saveLocal();
+      incrementUserQuestions();
+    }
+    
+    renderAll();
+    const msg = toAdd.length
+      ? `Successfully added ${toAdd.length} question${toAdd.length === 1 ? '' : 's'}${skipped ? ` · ${skipped} duplicate${skipped === 1 ? '' : 's'} skipped` : ''}.`
+      : `No new questions — all ${skipped} were already in the bank.`;
+    showToast(msg);
+  }
+
+  function renderAll() { renderStats(); renderBrowse(); renderQuiz(); }
+
+  // ── OCR ────────────────────────────────────────────────────
+
+  function parseOCRText(raw) {
+    let lines = String(raw || '').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return null;
+
+    const ignoredPhrases = ["select the best answer","choose the best answer","select the correct answer","choose the correct answer","select the best option","select all that apply","circle the best answer","mark the best answer"];
+    lines = lines.filter(line => {
+      const lower = line.toLowerCase();
+      if (ignoredPhrases.some(p => lower.includes(p))) return false;
+      if (/^(question\s*)?\d+\.?\s*$/i.test(line)) return false;
+      return true;
+    });
+    if (!lines.length) return null;
+
+    const merged = [];
+    for (const line of lines) {
+      const isAnswerLabel = /^[A-Da-d][\).:\-]\s+\S/.test(line);
+      const startsLower = /^[a-z]/.test(line);
+      if (startsLower && !isAnswerLabel && merged.length > 0) {
+        merged[merged.length-1] += ' ' + line;
+      } else {
+        merged.push(line);
+      }
+    }
+
+    const tfPattern = /^(true|false)$/i;
+    const hasTFLines = merged.some(l => tfPattern.test(l.trim()));
+    const hasTFInQuestion = merged.some(l => /true\s+or\s+false/i.test(l));
+    const answerLabelRe = /^([A-Da-d])[\).:\-]\s+(.+)/;
+    const labeledAnswers = {};
+    const nonLabeledLines = [];
+
+    for (const line of merged) {
+      const m = line.match(answerLabelRe);
+      if (m) {
+        const letter = m[1].toUpperCase();
+        if (['A','B','C','D'].includes(letter) && !labeledAnswers[letter]) labeledAnswers[letter] = m[2].trim();
+      } else {
+        nonLabeledLines.push(line);
+      }
+    }
+
+    const hasLabeled = Object.keys(labeledAnswers).length > 0;
+    let questionParts = [], answers = ['','','',''];
+
+    if (hasLabeled) {
+      questionParts = nonLabeledLines;
+      answers[0] = labeledAnswers['A'] || '';
+      answers[1] = labeledAnswers['B'] || '';
+      answers[2] = labeledAnswers['C'] || '';
+      answers[3] = labeledAnswers['D'] || '';
+    } else if (hasTFLines || hasTFInQuestion) {
+      questionParts = merged.filter(l => !tfPattern.test(l.trim()));
+      answers[0] = 'True'; answers[1] = 'False';
+    } else {
+      if (merged.length === 1) { questionParts = merged; }
+      else { questionParts = [merged[0]]; merged.slice(1).forEach((l,i) => { if (i<4) answers[i]=l; }); }
+    }
+
+    let question = questionParts.join(' ').trim();
+    question = question.replace(/^[\s\W]*q(uestion)?\s*#?\s*\d+[\s\W]*/i, '').trim();
+    question = question.replace(/^\d+[\).:\-]\s*/, '').trim();
+
+    if (!question && !answers.some(a => a)) return null;
+    return { question, answers };
+  }
+
+  function applyParsedOCR(text) {
+    const parsed = parseOCRText(text);
+    if (!parsed) {
+      setOcrStatus('Could not detect question structure — try the Paste text option.', 'error');
+      return;
+    }
+    els.questionInput.value = parsed.question;
+    els.answerA.value = parsed.answers[0] || '';
+    els.answerB.value = parsed.answers[1] || '';
+    els.answerC.value = parsed.answers[2] || '';
+    els.answerD.value = parsed.answers[3] || '';
+    setOcrStatus('✓ Fields filled from screenshot!', 'success');
+    showToast('Screenshot scanned — review and save.');
+  }
+
+  let ocrWorker = null;
+  async function getOcrWorker() {
+    if (ocrWorker) return ocrWorker;
+    ocrWorker = await Tesseract.createWorker('eng', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
+      langPath:   'https://tessdata.projectnaptha.com/4.0.0',
+      logger:     m => {
+        if (m.status === 'recognizing text') {
+          setOcrStatus(`Scanning… ${Math.round((m.progress||0)*100)}%`, 'loading');
+        }
+      }
+    });
+    return ocrWorker;
+  }
+
+  async function runOCR(file) {
+    if (!file) return;
+    setOcrStatus('Loading OCR engine… (first scan takes ~5 s)', 'loading');
+    try {
+      const worker = await getOcrWorker();
+      setOcrStatus('Scanning image…', 'loading');
+      const result = await worker.recognize(file);
+      const text = result.data.text || '';
+      if (!text.trim()) throw new Error('No text found in image');
+      state.pendingOCRText = text;
+      applyParsedOCR(text);
+    } catch(err) {
+      console.error(err);
+      try { if (ocrWorker) { await ocrWorker.terminate(); } } catch(_) {}
+      ocrWorker = null;
+      setOcrStatus('Could not read the image. Try the Paste text option instead.', 'error');
+    }
+  }
+
+  // ── Save question ──────────────────────────────────────────
+
+  function addQuestion() {
+    const question = cleanText(els.questionInput.value);
+    const answers = currentAnswersFromForm();
+    const correct = els.correctSelect.value;
+    if (!question) return showToast('Add a question first.');
+    if (!answers.A || !answers.B) return showToast('Fill in at least A and B.');
+    if (!answers[correct]) return showToast('The correct answer box is empty.');
+
+    const dup = state.questions.find(q => normalizeText(q.question) === normalizeText(question));
+    if (dup) return showToast('That question is already saved.');
+
+    const item = { id: uid(), question, answers, correct, createdAt: Date.now() };
+    if (db) {
+      db.collection('questions').add(item).then(() => { resetForm(); incrementUserQuestions(); showToast('✓ Saved to shared bank!'); }).catch(() => showToast('Could not save — check Firebase.'));
+    } else {
+      state.questions.unshift(item); saveLocal(); renderAll(); resetForm(); incrementUserQuestions(); showToast('✓ Saved locally.');
+    }
+  }
+
+  // ── Drag & drop OCR ────────────────────────────────────────
+
+  const dz = els.ocrDropZone;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) runOCR(file);
+  });
+
+  // ── Event listeners ────────────────────────────────────────
+
+  els.nameSubmitBtn.addEventListener('click', () => {
+    const name = els.nameInput.value;
+    if (!name.trim()) return showToast('Please enter your name.');
+    saveUserName(name);
+  });
+  els.nameInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') els.nameSubmitBtn.click();
+  });
+
+  els.tabBtns.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+  els.addQuestionBtn.addEventListener('click', addQuestion);
+  els.clearFormBtn.addEventListener('click', resetForm);
+  els.searchInput.addEventListener('input', e => { state.search = e.target.value; renderBrowse(); });
+  els.sortNewestBtn.addEventListener('click', () => { state.sortMode = 'newest'; renderBrowse(); });
+  els.sortOldestBtn.addEventListener('click', () => { state.sortMode = 'oldest'; renderBrowse(); });
+  els.clearAllBtn.addEventListener('click', clearAll);
+  els.startQuizBtn.addEventListener('click', startQuiz);
+  els.restartQuizBtn.addEventListener('click', restartQuiz);
+  els.exportBtn.addEventListener('click', exportJSON);
+  els.importInput.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { await importJSON(file); } catch { showToast('Could not import that file.'); } finally { e.target.value = ''; }
+  });
+  els.ocrInput.addEventListener('change', e => runOCR(e.target.files?.[0]));
+  els.fillFromOCRBtn.addEventListener('click', () => {
+    if (!state.pendingOCRText) return showToast('Upload an image first.');
+    applyParsedOCR(state.pendingOCRText);
+  });
+  els.pasteOCRBtn.addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return showToast('Clipboard is empty.');
+      state.pendingOCRText = text;
+      applyParsedOCR(text);
+    } catch { showToast('Clipboard access blocked — try a different browser.'); }
+  });
+
+  // ── Boot ───────────────────────────────────────────────────
+
+  loadLocal();
+  loadLeaderboard();
+  loadUserName();
+  renderAll();
+  renderLeaderboard();
+  listenToQuestions();
+  listenToLeaderboard();
+  setTab('add');
+</script>
+</body>
+</html>
